@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Excel/CSV Smart Search</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            rel="stylesheet"
+        />
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+            body {
+                font-family: "Inter", sans-serif;
+                transition: background-color 0.3s ease;
+            }
+
+            .theme-light {
+                --bg-primary: #ffffff;
+                --bg-secondary: #f3f4f6;
+                --text-primary: #1f2937;
+                --text-secondary: #6b7280;
+                --accent-primary: #4f46e5;
+                --accent-secondary: #4338ca;
+                --border-color: #d1d5db;
+                --table-header: #f9fafb;
+                --table-row-hover: #eff6ff;
+            }
+
+            .theme-dark {
+                --bg-primary: #1f2937;
+                --bg-secondary: #111827;
+                --text-primary: #f9fafb;
+                --text-secondary: #d1d5db;
+                --accent-primary: #6366f1;
+                --accent-secondary: #818cf8;
+                --border-color: #374151;
+                --table-header: #111827;
+                --table-row-hover: #1f2937;
+            }
+
+            .app-container {
+                background-color: var(--bg-primary);
+                color: var(--text-primary);
+            }
+
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .slide-in {
+                animation: slideIn 0.3s ease-out;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .pulse {
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            .slide-up {
+                animation: slideUp 0.5s ease-out;
+            }
+
+            @keyframes slideUp {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .file-drop-area {
+                border: 2px dashed var(--border-color);
+                border-radius: 8px;
+                padding: 24px;
+                text-align: center;
+                transition: all 0.3s ease;
+            }
+
+            .file-drop-area.active {
+                border-color: var(--accent-primary);
+                background-color: rgba(99, 102, 241, 0.05);
+            }
+
+            .btn {
+                transition: all 0.2s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .btn:after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 5px;
+                height: 5px;
+                background: rgba(255, 255, 255, 0.5);
+                opacity: 0;
+                border-radius: 100%;
+                transform: scale(1, 1) translate(-50%);
+                transform-origin: 50% 50%;
+            }
+
+            .btn:focus:not(:active)::after {
+                animation: ripple 1s ease-out;
+            }
+
+            @keyframes ripple {
+                0% {
+                    transform: scale(0, 0);
+                    opacity: 0.5;
+                }
+                100% {
+                    transform: scale(20, 20);
+                    opacity: 0;
+                }
+            }
+
+            .search-box {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                transition: all 0.3s ease;
+            }
+
+            .search-box:focus-within {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+
+            table {
+                border-collapse: separate;
+                border-spacing: 0;
+                width: 100%;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            th {
+                position: sticky;
+                top: 0;
+                background-color: var(--table-header);
+                z-index: 10;
+                transition: background-color 0.2s ease;
+            }
+
+            th:hover {
+                background-color: var(--accent-primary);
+                color: white;
+            }
+
+            tbody tr {
+                transition: background-color 0.2s ease;
+            }
+
+            tbody tr:hover {
+                background-color: var(--table-row-hover);
+            }
+
+            .pagination-btn {
+                transition: all 0.2s ease;
+            }
+
+            .pagination-btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+            }
+
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 48px;
+                height: 24px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: 0.4s;
+                border-radius: 24px;
+            }
+
+            .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .toggle-slider {
+                background-color: var(--accent-primary);
+            }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(24px);
+            }
+
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+
+            .tooltip .tooltip-text {
+                visibility: hidden;
+                width: 120px;
+                background-color: var(--bg-secondary);
+                color: var(--text-primary);
+                text-align: center;
+                padding: 5px;
+                border-radius: 6px;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%;
+                left: 50%;
+                margin-left: -60px;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+
+            .tooltip:hover .tooltip-text {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            /* Update the existing select styling */
+            select {
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 0.75rem center;
+                background-size: 1rem;
+                padding-right: 3rem; /* Increased from 2.5rem */
+            }
+
+            /* Add this new rule after your existing select styling */
+            #columnSelect,
+            #rowsPerPage {
+                padding-right: 3rem !important; /* Force more padding on the right side */
+                text-overflow: ellipsis; /* Add ellipsis for very long text */
+            }
+
+            /* Skeleton loader */
+            .skeleton {
+                animation: skeleton-loading 1.5s infinite;
+            }
+
+            @keyframes skeleton-loading {
+                0% {
+                    background-color: rgba(211, 211, 211, 0.1);
+                }
+                50% {
+                    background-color: rgba(211, 211, 211, 0.3);
+                }
+                100% {
+                    background-color: rgba(211, 211, 211, 0.1);
+                }
+            }
+
+            /* Suggestions dropdown */
+            .suggestions-dropdown {
+                max-height: 0;
+                opacity: 0;
+                overflow: hidden;
+                transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+            }
+
+            .suggestions-dropdown.show {
+                max-height: 200px;
+                opacity: 1;
+            }
+
+            /* File input custom styling */
+            .file-input-label {
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .file-input-label:hover {
+                background-color: var(--accent-secondary);
+            }
+
+            /* No data placeholder styling */
+            .no-data-placeholder {
+                min-height: 300px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    <body class="theme-light app-container min-h-screen">
+        <header
+            class="sticky top-0 z-20 border-b border-gray-200 backdrop-blur bg-white bg-opacity-75"
+        >
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <i
+                            class="fas fa-table-cells text-indigo-600 text-2xl"
+                        ></i>
+                        <h1 class="text-2xl font-bold text-gray-800">
+                            DataExplorer
+                        </h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button
+                            id="helpBtn"
+                            class="p-2 rounded-full hover:bg-gray-100 text-gray-600 focus:outline-none"
+                        >
+                            <i class="fas fa-question-circle"></i>
+                        </button>
+                        <div class="tooltip">
+                            <button
+                                id="themeToggle"
+                                class="p-2 rounded-full hover:bg-gray-100 text-gray-600 focus:outline-none"
+                            >
+                                <i class="fas fa-moon"></i>
+                            </button>
+                            <span class="tooltip-text">Toggle dark mode</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div
+            id="fileUploadContainer"
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 fade-in"
+        >
+            <div class="file-drop-area bg-white rounded-lg shadow-sm">
+                <div class="flex flex-col items-center justify-center py-6">
+                    <i
+                        class="fas fa-file-excel text-indigo-500 text-4xl mb-3"
+                    ></i>
+                    <h3 class="text-lg font-medium text-gray-800">
+                        Upload Excel or CSV File
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Drag and drop your file here or click to browse
+                    </p>
+                    <label
+                        for="fileInput"
+                        class="file-input-label bg-indigo-600 text-white font-medium rounded-md px-4 py-2 inline-flex items-center"
+                    >
+                        <i class="fas fa-upload mr-2"></i>
+                        Browse Files
+                        <input
+                            type="file"
+                            id="fileInput"
+                            accept=".csv,.xlsx"
+                            class="hidden"
+                        />
+                    </label>
+                    <div id="fileInfo" class="mt-3 text-sm text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            id="searchContainer"
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 slide-in hidden"
+        >
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div
+                    class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-3 md:space-y-0"
+                >
+                    <div class="flex-1 relative">
+                        <div
+                            class="search-box flex items-center bg-gray-50 rounded-lg border border-gray-300 overflow-hidden"
+                        >
+                            <span class="pl-3 text-gray-400">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input
+                                type="text"
+                                id="searchInput"
+                                placeholder="Search term(s)... (space=AND, comma=OR)"
+                                class="bg-transparent pl-2 pr-3 py-3 w-full focus:outline-none"
+                            />
+                        </div>
+                        <ul
+                            id="suggestions"
+                            class="suggestions-dropdown absolute left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg"
+                        ></ul>
+                    </div>
+
+                    <div
+                        class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3"
+                    >
+                        <select
+                            id="columnSelect"
+                            class="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 pr-10 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="all">All Columns</option>
+                        </select>
+
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600"
+                                >Case Sensitive</span
+                            >
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="caseToggle" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <button
+                            id="downloadBtn"
+                            class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg inline-flex items-center"
+                        >
+                            <i class="fas fa-download mr-2"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 slide-up">
+            <div
+                id="resultsContainer"
+                class="bg-white rounded-lg shadow-sm overflow-hidden hidden"
+            >
+                <div class="border-b border-gray-200 py-3 px-4">
+                    <div class="flex justify-between items-center">
+                        <div
+                            id="resultCount"
+                            class="text-sm font-medium text-gray-600"
+                        ></div>
+                        <div class="flex items-center space-x-2">
+                            <label
+                                for="rowsPerPage"
+                                class="text-sm text-gray-600"
+                                >Rows per page:</label
+                            >
+                            <select
+                                id="rowsPerPage"
+                                class="bg-gray-50 border border-gray-300 rounded-md text-sm px-2 pr-8 py-1"
+                            >
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table id="resultTable" class="w-full"></table>
+                </div>
+
+                <div
+                    id="pagination"
+                    class="flex justify-center py-4 border-t border-gray-200"
+                ></div>
+            </div>
+
+            <div id="noDataContainer" class="no-data-placeholder hidden">
+                <i class="fas fa-table text-gray-300 text-5xl mb-4"></i>
+                <p class="text-gray-500 text-lg">
+                    No data available. Please upload a file.
+                </p>
+            </div>
+
+            <div id="loadingContainer" class="no-data-placeholder hidden">
+                <div
+                    class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+                ></div>
+                <p class="text-gray-500 text-lg mt-4">Processing file...</p>
+            </div>
+        </main>
+
+        <!-- Help modal -->
+        <div
+            id="helpModal"
+            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all"
+            >
+                <div
+                    class="flex justify-between items-center border-b border-gray-200 px-6 py-4"
+                >
+                    <h3 class="text-lg font-medium">Help & Tips</h3>
+                    <button
+                        id="closeHelpBtn"
+                        class="text-gray-400 hover:text-gray-500"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-medium text-gray-800">
+                                File Support
+                            </h4>
+                            <p class="text-gray-600">
+                                Upload Excel (.xlsx) or CSV files to analyze
+                                your data.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">
+                                Search Syntax
+                            </h4>
+                            <ul class="list-disc pl-5 text-gray-600">
+                                <li>
+                                    Use
+                                    <span class="font-medium">spaces</span>
+                                    between terms for AND logic
+                                </li>
+                                <li>
+                                    Use
+                                    <span class="font-medium">commas</span>
+                                    between terms for OR logic
+                                </li>
+                                <li>Toggle case sensitivity with the switch</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">
+                                Data Management
+                            </h4>
+                            <p class="text-gray-600">
+                                Your data is stored locally in your browser and
+                                is not sent to any server.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Exporting</h4>
+                            <p class="text-gray-600">
+                                The Export button will download your filtered
+                                results as a CSV file.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 flex justify-end rounded-b-lg">
+                    <button
+                        id="gotItBtn"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+                    >
+                        Got it
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Variables
+                let data = [],
+                    headerRow = [],
+                    currentPage = 1,
+                    sortCol = -1,
+                    sortAsc = true;
+                let filteredRows = [],
+                    rowsPerPage = 8;
+                const uniqueWords = new Map();
+                let lastFileName = "";
+                let isDarkMode = false;
+
+                // DOM Elements
+                const fileInput = document.getElementById("fileInput");
+                const fileInfo = document.getElementById("fileInfo");
+                const searchInput = document.getElementById("searchInput");
+                const suggestionsBox = document.getElementById("suggestions");
+                const resultTable = document.getElementById("resultTable");
+                const resultCount = document.getElementById("resultCount");
+                const columnSelect = document.getElementById("columnSelect");
+                const caseToggle = document.getElementById("caseToggle");
+                const pagination = document.getElementById("pagination");
+                const downloadBtn = document.getElementById("downloadBtn");
+                const fileUploadContainer = document.getElementById(
+                    "fileUploadContainer"
+                );
+                const searchContainer =
+                    document.getElementById("searchContainer");
+                const resultsContainer =
+                    document.getElementById("resultsContainer");
+                const noDataContainer =
+                    document.getElementById("noDataContainer");
+                const loadingContainer =
+                    document.getElementById("loadingContainer");
+                const rowsPerPageSelect =
+                    document.getElementById("rowsPerPage");
+                const themeToggle = document.getElementById("themeToggle");
+                const helpBtn = document.getElementById("helpBtn");
+                const helpModal = document.getElementById("helpModal");
+                const closeHelpBtn = document.getElementById("closeHelpBtn");
+                const gotItBtn = document.getElementById("gotItBtn");
+                const fileDropArea = document.querySelector(".file-drop-area");
+
+                // Event Listeners
+                fileInput.addEventListener("change", handleFile);
+                searchInput.addEventListener(
+                    "input",
+                    debounce(() => {
+                        currentPage = 1;
+                        showSuggestions(searchInput.value);
+                        searchAndRender();
+                    }, 300)
+                );
+                columnSelect.addEventListener("change", searchAndRender);
+                caseToggle.addEventListener("change", searchAndRender);
+                downloadBtn.addEventListener("click", downloadCSV);
+                rowsPerPageSelect.addEventListener("change", () => {
+                    rowsPerPage = parseInt(rowsPerPageSelect.value);
+                    currentPage = 1;
+                    renderTable();
+                });
+                themeToggle.addEventListener("click", toggleTheme);
+                helpBtn.addEventListener("click", () =>
+                    helpModal.classList.remove("hidden")
+                );
+                closeHelpBtn.addEventListener("click", () =>
+                    helpModal.classList.add("hidden")
+                );
+                gotItBtn.addEventListener("click", () =>
+                    helpModal.classList.add("hidden")
+                );
+
+                // File drag and drop
+                fileDropArea.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    fileDropArea.classList.add("active");
+                });
+
+                fileDropArea.addEventListener("dragleave", () => {
+                    fileDropArea.classList.remove("active");
+                });
+
+                fileDropArea.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    fileDropArea.classList.remove("active");
+
+                    if (e.dataTransfer.files.length) {
+                        fileInput.files = e.dataTransfer.files;
+                        handleFile({ target: { files: e.dataTransfer.files } });
+                    }
+                });
+
+                fileDropArea.addEventListener("click", () => {
+                    fileInput.click();
+                });
+
+                // Click outside suggestions to close
+                document.addEventListener("click", (e) => {
+                    if (
+                        e.target !== searchInput &&
+                        e.target !== suggestionsBox
+                    ) {
+                        suggestionsBox.classList.remove("show");
+                    }
+                });
+
+                // Close modal on click outside
+                helpModal.addEventListener("click", (e) => {
+                    if (e.target === helpModal) {
+                        helpModal.classList.add("hidden");
+                    }
+                });
+
+                // Initialize UI
+                checkForSavedData();
+
+                // Functions
+                function checkForSavedData() {
+                    try {
+                        lastFileName =
+                            localStorage.getItem("lastFileName") || "";
+
+                        if (lastFileName) {
+                            const savedHeaderRow = JSON.parse(
+                                localStorage.getItem("headerRow") || "[]"
+                            );
+                            const savedData = JSON.parse(
+                                localStorage.getItem("data") || "[]"
+                            );
+
+                            if (
+                                savedHeaderRow.length > 0 &&
+                                savedData.length > 0
+                            ) {
+                                headerRow = savedHeaderRow;
+                                data = savedData;
+
+                                fileInfo.innerHTML = `<span class="text-indigo-600 font-medium"><i class="fas fa-check-circle mr-1"></i> ${lastFileName}</span>`;
+                                fileUploadContainer.classList.add("hidden");
+                                searchContainer.classList.remove("hidden");
+                                resultsContainer.classList.remove("hidden");
+                                noDataContainer.classList.add("hidden");
+
+                                populateColumnSelect();
+                                extractWords();
+                                searchAndRender();
+
+                                console.log(
+                                    `Loaded saved file: ${lastFileName}`
+                                );
+                            } else {
+                                showNoData();
+                            }
+                        } else {
+                            showNoData();
+                        }
+                    } catch (error) {
+                        console.error("Error loading saved data:", error);
+                        showNoData();
+                    }
+                }
+
+                function showNoData() {
+                    fileUploadContainer.classList.remove("hidden");
+                    searchContainer.classList.add("hidden");
+                    resultsContainer.classList.add("hidden");
+                    noDataContainer.classList.remove("hidden");
+                }
+
+                function saveData() {
+                    try {
+                        localStorage.setItem("lastFileName", lastFileName);
+                        localStorage.setItem(
+                            "headerRow",
+                            JSON.stringify(headerRow)
+                        );
+                        localStorage.setItem("data", JSON.stringify(data));
+                        console.log(`Saved file data: ${lastFileName}`);
+                    } catch (error) {
+                        console.error("Error saving data:", error);
+
+                        if (error.name === "QuotaExceededError") {
+                            showToast(
+                                "The file is too large to save in browser storage. Data will not persist when you close the browser.",
+                                "warning"
+                            );
+                        }
+                    }
+                }
+
+                function handleFile(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const ext = file.name.split(".").pop().toLowerCase();
+                    if (ext !== "csv" && ext !== "xlsx") {
+                        showToast(
+                            "Please upload a valid CSV or Excel file.",
+                            "error"
+                        );
+                        return;
+                    }
+
+                    lastFileName = file.name;
+                    fileInfo.innerHTML = `<div class="flex items-center"><div class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent mr-2"></div> Processing ${file.name}...</div>`;
+
+                    fileUploadContainer.classList.add("hidden");
+                    loadingContainer.classList.remove("hidden");
+                    searchContainer.classList.add("hidden");
+                    resultsContainer.classList.add("hidden");
+                    noDataContainer.classList.add("hidden");
+
+                    setTimeout(() => {
+                        const reader = new FileReader();
+
+                        reader.onload = (ev) => {
+                            try {
+                                const content = ev.target.result;
+
+                                if (ext === "csv") {
+                                    const parsed = Papa.parse(content, {
+                                        skipEmptyLines: true,
+                                    });
+                                    headerRow = parsed.data.shift();
+                                    data = parsed.data;
+                                } else {
+                                    const wb = XLSX.read(content, {
+                                        type: "binary",
+                                    });
+                                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                                    const parsed = XLSX.utils.sheet_to_json(
+                                        sheet,
+                                        { header: 1 }
+                                    );
+                                    headerRow = parsed.shift();
+                                    data = parsed;
+                                }
+
+                                // Complete the loading
+                                fileInfo.innerHTML = `<span class="text-indigo-600 font-medium"><i class="fas fa-check-circle mr-1"></i> ${file.name}</span>`;
+                                loadingContainer.classList.add("hidden");
+                                searchContainer.classList.remove("hidden");
+                                resultsContainer.classList.remove("hidden");
+
+                                // Save, populate, and render
+                                saveData();
+                                populateColumnSelect();
+                                extractWords();
+                                searchAndRender();
+                                showToast(
+                                    `Successfully loaded ${file.name} with ${data.length} rows`,
+                                    "success"
+                                );
+                            } catch (error) {
+                                console.error("Error parsing file:", error);
+                                fileUploadContainer.classList.remove("hidden");
+                                loadingContainer.classList.add("hidden");
+                                showToast(
+                                    "Failed to process file. Please check the format and try again.",
+                                    "error"
+                                );
+                            }
+                        };
+
+                        reader.onerror = () => {
+                            fileUploadContainer.classList.remove("hidden");
+                            loadingContainer.classList.add("hidden");
+                            showToast(
+                                "Error reading file. Please try again.",
+                                "error"
+                            );
+                        };
+
+                        if (ext === "csv") reader.readAsText(file);
+                        else reader.readAsBinaryString(file);
+                    }, 500); // Add a small delay for better UX
+                }
+
+                function populateColumnSelect() {
+                    columnSelect.innerHTML =
+                        '<option value="all">All Columns</option>';
+                    headerRow.forEach((col, i) => {
+                        const opt = document.createElement("option");
+                        opt.value = i;
+                        opt.textContent = col;
+                        columnSelect.appendChild(opt);
+                    });
+                }
+
+                function extractWords() {
+                    uniqueWords.clear();
+                    data.flat().forEach((cell) => {
+                        if (cell && typeof cell === "string") {
+                            cell.split(/\s+/).forEach((word) => {
+                                const w = word.trim().toLowerCase();
+                                if (w && w.length > 1)
+                                    uniqueWords.set(
+                                        w,
+                                        (uniqueWords.get(w) || 0) + 1
+                                    );
+                            });
+                        }
+                    });
+                }
+
+                function showSuggestions(input) {
+                    suggestionsBox.innerHTML = "";
+                    if (!input || input.length < 2) {
+                        suggestionsBox.classList.remove("show");
+                        return;
+                    }
+
+                    const matches = [...uniqueWords.keys()]
+                        .filter((word) => word.includes(input.toLowerCase()))
+                        .sort((a, b) => uniqueWords.get(b) - uniqueWords.get(a)) // Sort by frequency
+                        .slice(0, 8);
+
+                    if (matches.length === 0) {
+                        suggestionsBox.classList.remove("show");
+                        return;
+                    }
+
+                    matches.forEach((match) => {
+                        const li = document.createElement("li");
+                        li.innerHTML = highlightMatch(match, input);
+                        li.className =
+                            "p-3 hover:bg-gray-100 cursor-pointer text-gray-700 border-b border-gray-100 last:border-0";
+                        li.onclick = () => {
+                            searchInput.value = match;
+                            suggestionsBox.classList.remove("show");
+                            searchAndRender();
+                        };
+                        suggestionsBox.appendChild(li);
+                    });
+
+                    suggestionsBox.classList.add("show");
+                }
+
+                function highlightMatch(text, query) {
+                    const regex = new RegExp(`(${query})`, "gi");
+                    return text.replace(
+                        regex,
+                        '<span class="font-medium text-indigo-600">$1</span>'
+                    );
+                }
+
+                function searchAndRender() {
+                    const term = searchInput.value.trim();
+                    const isCase = caseToggle.checked;
+                    const col = columnSelect.value;
+
+                    const logic = term.includes(",") ? "OR" : "AND";
+                    const parts =
+                        logic === "OR"
+                            ? term.split(",").map((p) => p.trim())
+                            : term.split(/\s+/);
+                    // If no search term, show all data
+                    if (!term) {
+                        filteredRows = [...data];
+                    } else {
+                        filteredRows = data.filter((row) => {
+                            if (!row || row.length === 0) return false;
+
+                            const cells = col === "all" ? row : [row[col]];
+
+                            return cells.some((cell) => {
+                                if (!cell) return false;
+                                const text = isCase
+                                    ? String(cell)
+                                    : String(cell).toLowerCase();
+
+                                return logic === "AND"
+                                    ? parts.every((p) =>
+                                          text.includes(
+                                              isCase ? p : p.toLowerCase()
+                                          )
+                                      )
+                                    : parts.some((p) =>
+                                          text.includes(
+                                              isCase ? p : p.toLowerCase()
+                                          )
+                                      );
+                            });
+                        });
+                    }
+
+                    sortAndRenderTable();
+                }
+
+                function sortAndRenderTable() {
+                    if (sortCol >= 0) {
+                        filteredRows.sort((a, b) => {
+                            if (!a || !b) return 0;
+
+                            const A = a[sortCol]?.toString() || "";
+                            const B = b[sortCol]?.toString() || "";
+
+                            // Try to sort as numbers if possible
+                            const numA = parseFloat(A);
+                            const numB = parseFloat(B);
+
+                            if (!isNaN(numA) && !isNaN(numB)) {
+                                return sortAsc ? numA - numB : numB - numA;
+                            }
+
+                            // Otherwise sort alphabetically
+                            return sortAsc
+                                ? A.localeCompare(B)
+                                : B.localeCompare(A);
+                        });
+                    }
+
+                    renderTable();
+                }
+
+                function renderTableHeader() {
+                    const thead = resultTable.createTHead();
+                    const row = thead.insertRow();
+
+                    headerRow.forEach((text, idx) => {
+                        const th = document.createElement("th");
+                        th.className =
+                            "px-4 py-3 font-semibold border-b text-left cursor-pointer transition-colors duration-200";
+
+                        // Add sort indicator
+                        const sortIndicator =
+                            sortCol === idx
+                                ? sortAsc
+                                    ? '<i class="fas fa-sort-up ml-2 text-indigo-600"></i>'
+                                    : '<i class="fas fa-sort-down ml-2 text-indigo-600"></i>'
+                                : '<i class="fas fa-sort ml-2 text-gray-300"></i>';
+
+                        th.innerHTML = `<div class="flex items-center">${text} ${sortIndicator}</div>`;
+
+                        th.onclick = () => {
+                            if (sortCol === idx) {
+                                sortAsc = !sortAsc;
+                            } else {
+                                sortCol = idx;
+                                sortAsc = true;
+                            }
+                            sortAndRenderTable();
+                        };
+
+                        row.appendChild(th);
+                    });
+                }
+
+                function renderTable() {
+                    resultTable.innerHTML = "";
+
+                    if (headerRow.length === 0 || filteredRows.length === 0) {
+                        resultCount.textContent =
+                            data.length > 0
+                                ? "No matching records found."
+                                : "No data loaded. Please upload a file.";
+                        return;
+                    }
+
+                    // Add the header with sorting indicators
+                    renderTableHeader();
+
+                    const tbody = resultTable.createTBody();
+                    const start = (currentPage - 1) * rowsPerPage;
+                    const pageRows = filteredRows.slice(
+                        start,
+                        start + rowsPerPage
+                    );
+
+                    pageRows.forEach((row, rowIdx) => {
+                        const tr = tbody.insertRow();
+                        tr.className =
+                            rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50";
+
+                        row.forEach((cell, cellIdx) => {
+                            const td = tr.insertCell();
+                            td.className = "px-4 py-3 border-b text-gray-700";
+
+                            // Handle different content types
+                            if (cell === null || cell === undefined) {
+                                td.textContent = "";
+                            } else if (typeof cell === "number") {
+                                td.className += " text-right font-mono";
+                                td.textContent = cell;
+                            } else if (
+                                String(cell).startsWith("http://") ||
+                                String(cell).startsWith("https://")
+                            ) {
+                                const a = document.createElement("a");
+                                a.href = cell;
+                                a.target = "_blank";
+                                a.className = "text-indigo-600 hover:underline";
+                                a.textContent = cell;
+                                td.appendChild(a);
+                            } else {
+                                td.textContent = cell;
+                            }
+                        });
+                    });
+
+                    resultCount.innerHTML = `<strong>${
+                        filteredRows.length
+                    }</strong> ${
+                        filteredRows.length === 1 ? "row" : "rows"
+                    } matched ${
+                        data.length ? `(from ${data.length} total)` : ""
+                    }`;
+                    renderPagination();
+                }
+
+                function renderPagination() {
+                    pagination.innerHTML = "";
+                    const pages = Math.ceil(filteredRows.length / rowsPerPage);
+
+                    if (pages <= 1) return;
+
+                    // Add Previous button
+                    const prevBtn = document.createElement("button");
+                    prevBtn.innerHTML =
+                        '<i class="fas fa-chevron-left mx-1"></i>';
+                    prevBtn.className = `pagination-btn mx-1 px-4 py-1 rounded ${
+                        currentPage === 1
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200"
+                    }`;
+                    prevBtn.disabled = currentPage === 1;
+                    prevBtn.onclick = () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            renderTable();
+                            // Scroll to top of table
+                            resultsContainer.scrollIntoView({
+                                behavior: "smooth",
+                            });
+                        }
+                    };
+                    pagination.appendChild(prevBtn);
+
+                    // Add page numbers with dynamic range
+                    const maxButtons = 5;
+                    let startPage = Math.max(
+                        1,
+                        currentPage - Math.floor(maxButtons / 2)
+                    );
+                    let endPage = Math.min(pages, startPage + maxButtons - 1);
+
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    // First page button if not in range
+                    if (startPage > 1) {
+                        const firstBtn = document.createElement("button");
+                        firstBtn.textContent = "1";
+                        firstBtn.className =
+                            "pagination-btn mx-1 px-3 py-1 rounded bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200";
+                        firstBtn.onclick = () => {
+                            currentPage = 1;
+                            renderTable();
+                            resultsContainer.scrollIntoView({
+                                behavior: "smooth",
+                            });
+                        };
+                        pagination.appendChild(firstBtn);
+
+                        if (startPage > 2) {
+                            const ellipsis = document.createElement("span");
+                            ellipsis.textContent = "...";
+                            ellipsis.className = "mx-1 text-gray-500";
+                            pagination.appendChild(ellipsis);
+                        }
+                    }
+
+                    // Page buttons
+                    for (let i = startPage; i <= endPage; i++) {
+                        const btn = document.createElement("button");
+                        btn.textContent = i;
+                        btn.className = `pagination-btn mx-1 px-3 py-1 rounded ${
+                            i === currentPage
+                                ? "bg-indigo-600 text-white"
+                                : "bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200"
+                        }`;
+
+                        if (i === currentPage) {
+                            btn.classList.add("font-medium");
+                        }
+
+                        btn.onclick = () => {
+                            currentPage = i;
+                            renderTable();
+                            resultsContainer.scrollIntoView({
+                                behavior: "smooth",
+                            });
+                        };
+                        pagination.appendChild(btn);
+                    }
+
+                    // Last page button if not in range
+                    if (endPage < pages) {
+                        if (endPage < pages - 1) {
+                            const ellipsis = document.createElement("span");
+                            ellipsis.textContent = "...";
+                            ellipsis.className = "mx-1 text-gray-500";
+                            pagination.appendChild(ellipsis);
+                        }
+
+                        const lastBtn = document.createElement("button");
+                        lastBtn.textContent = pages;
+                        lastBtn.className =
+                            "pagination-btn mx-1 px-3 py-1 rounded bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200";
+                        lastBtn.onclick = () => {
+                            currentPage = pages;
+                            renderTable();
+                            resultsContainer.scrollIntoView({
+                                behavior: "smooth",
+                            });
+                        };
+                        pagination.appendChild(lastBtn);
+                    }
+
+                    // Add Next button
+                    const nextBtn = document.createElement("button");
+                    nextBtn.innerHTML =
+                        '<i class="fas fa-chevron-right mx-1"></i>';
+                    nextBtn.className = `pagination-btn mx-1 px-4 py-1 rounded ${
+                        currentPage === pages
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200"
+                    }`;
+                    nextBtn.disabled = currentPage === pages;
+                    nextBtn.onclick = () => {
+                        if (currentPage < pages) {
+                            currentPage++;
+                            renderTable();
+                            resultsContainer.scrollIntoView({
+                                behavior: "smooth",
+                            });
+                        }
+                    };
+                    pagination.appendChild(nextBtn);
+                }
+
+                function downloadCSV() {
+                    if (!filteredRows.length) {
+                        showToast("No data to export", "warning");
+                        return;
+                    }
+
+                    // Add animation to download button
+                    downloadBtn.innerHTML =
+                        '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+                    downloadBtn.disabled = true;
+
+                    setTimeout(() => {
+                        try {
+                            const content = [headerRow, ...filteredRows]
+                                .map((r) =>
+                                    r
+                                        .map(
+                                            (c) =>
+                                                `"${
+                                                    c === null ||
+                                                    c === undefined
+                                                        ? ""
+                                                        : c
+                                                }"`
+                                        )
+                                        .join(",")
+                                )
+                                .join("\n");
+                            const blob = new Blob([content], {
+                                type: "text/csv;charset=utf-8;",
+                            });
+                            saveAs(
+                                blob,
+                                `filtered_${lastFileName || "results"}.csv`
+                            );
+
+                            showToast(
+                                `Exported ${filteredRows.length} rows successfully`,
+                                "success"
+                            );
+                        } catch (error) {
+                            console.error("Export error:", error);
+                            showToast("Failed to export data", "error");
+                        } finally {
+                            downloadBtn.innerHTML =
+                                '<i class="fas fa-download mr-2"></i>Export';
+                            downloadBtn.disabled = false;
+                        }
+                    }, 500);
+                }
+
+                function toggleTheme() {
+                    isDarkMode = !isDarkMode;
+                    document.body.classList.toggle("theme-light", !isDarkMode);
+                    document.body.classList.toggle("theme-dark", isDarkMode);
+
+                    // Update theme toggle icon
+                    themeToggle.innerHTML = isDarkMode
+                        ? '<i class="fas fa-sun"></i>'
+                        : '<i class="fas fa-moon"></i>';
+
+                    // Save theme preference
+                    localStorage.setItem("darkMode", isDarkMode);
+                }
+
+                // Load theme preference
+                if (localStorage.getItem("darkMode") === "true") {
+                    toggleTheme();
+                }
+
+                // Toast notifications
+                function showToast(message, type = "info") {
+                    // Remove existing toast if any
+                    const existingToast = document.querySelector(
+                        ".toast-notification"
+                    );
+                    if (existingToast) {
+                        existingToast.remove();
+                    }
+
+                    // Create new toast
+                    const toast = document.createElement("div");
+                    toast.className =
+                        "toast-notification fixed bottom-4 right-4 z-50 p-4 rounded-lg shadow-lg slide-up max-w-sm";
+
+                    // Set color based on type
+                    switch (type) {
+                        case "success":
+                            toast.classList.add("bg-green-600", "text-white");
+                            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i>${message}</div>`;
+                            break;
+                        case "error":
+                            toast.classList.add("bg-red-600", "text-white");
+                            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>${message}</div>`;
+                            break;
+                        case "warning":
+                            toast.classList.add("bg-yellow-500", "text-white");
+                            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i>${message}</div>`;
+                            break;
+                        default:
+                            toast.classList.add("bg-indigo-600", "text-white");
+                            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-info-circle mr-2"></i>${message}</div>`;
+                    }
+
+                    document.body.appendChild(toast);
+
+                    // Remove toast after 3 seconds
+                    setTimeout(() => {
+                        toast.classList.add("fade-out");
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+
+                // Utility function for debouncing
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+
+                // Add keyboard shortcuts
+                document.addEventListener("keydown", (e) => {
+                    // Ctrl+F to focus search
+                    if (
+                        (e.ctrlKey || e.metaKey) &&
+                        e.key === "f" &&
+                        !e.shiftKey &&
+                        !e.altKey
+                    ) {
+                        if (searchContainer.classList.contains("hidden"))
+                            return;
+                        e.preventDefault();
+                        searchInput.focus();
+                    }
+
+                    // ESC to close modals
+                    if (e.key === "Escape") {
+                        helpModal.classList.add("hidden");
+                        suggestionsBox.classList.remove("show");
+                    }
+                });
+
+                // Add CSS for toast animations
+                const style = document.createElement("style");
+                style.textContent = `
+        .toast-notification {
+          transition: all 0.3s ease;
+        }
+        .fade-out {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+      `;
+                document.head.appendChild(style);
+            });
+        </script>
+    </body>
+</html>
