@@ -721,6 +721,237 @@
             .new-row-form button {
                 padding: 0.375rem 0.75rem;
             }
+
+            /* Add new animations and visual enhancements */
+            .action-btn {
+                transition: all 0.3s ease;
+                transform: scale(1);
+            }
+
+            .action-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .action-btn:active {
+                transform: scale(0.95);
+            }
+
+            .edit-btn:hover {
+                background-color: #4f46e5;
+                color: white;
+            }
+
+            .delete-btn:hover {
+                background-color: #ef4444;
+                color: white;
+            }
+
+            /* Table row hover animation */
+            tbody tr {
+                transition: all 0.3s ease;
+            }
+
+            tbody tr:hover {
+                transform: translateX(5px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Button hover effects */
+            .btn {
+                position: relative;
+                overflow: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+            /* File drop area animation */
+            .file-drop-area {
+                transition: all 0.3s ease;
+            }
+
+            .file-drop-area:hover {
+                transform: scale(1.01);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Search box animation */
+            .search-box {
+                transition: all 0.3s ease;
+            }
+
+            .search-box:focus-within {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Pagination button animations */
+            .pagination-btn {
+                transition: all 0.3s ease;
+            }
+
+            .pagination-btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .pagination-btn:active:not(:disabled) {
+                transform: translateY(0);
+            }
+
+            /* Toast notification animation */
+            .toast-notification {
+                animation: slideIn 0.5s ease-out, fadeIn 0.5s ease-out;
+            }
+
+            .toast-notification.fade-out {
+                animation: slideOut 0.5s ease-out, fadeOut 0.5s ease-out;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                }
+                to {
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                }
+                to {
+                    transform: translateX(100%);
+                }
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
+
+            /* Loading spinner animation */
+            .loading-spinner {
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Table cell hover effect */
+            td {
+                transition: background-color 0.3s ease;
+            }
+
+            .theme-light td:hover {
+                background-color: #f3f4f6;
+            }
+
+            .theme-dark td:hover {
+                background-color: rgba(99, 102, 241, 0.1);
+            }
+
+            /* Header hover effect */
+            th {
+                transition: all 0.3s ease;
+            }
+
+            .theme-light th:hover {
+                background-color: #f3f4f6;
+                color: #1f2937;
+            }
+
+            .theme-dark th:hover {
+                background-color: rgba(99, 102, 241, 0.1);
+            }
+
+            /* Smooth scroll for table */
+            .table-container {
+                scroll-behavior: smooth;
+            }
+
+            /* Modal animation */
+            #helpModal {
+                animation: modalFadeIn 0.3s ease-out;
+            }
+
+            @keyframes modalFadeIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            /* Suggestions dropdown animation */
+            .suggestions-dropdown {
+                animation: dropdownFadeIn 0.3s ease-out;
+            }
+
+            @keyframes dropdownFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Theme toggle animation */
+            #themeToggle {
+                transition: transform 0.3s ease;
+            }
+
+            #themeToggle:hover {
+                transform: rotate(30deg);
+            }
+
+            /* File upload button animation */
+            .file-input-label {
+                transition: all 0.3s ease;
+            }
+
+            .file-input-label:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .file-input-label:active {
+                transform: translateY(0);
+            }
         </style>
     </head>
     <body class="theme-light app-container min-h-screen">
@@ -1021,14 +1252,17 @@
                 });
 
                 // Add save button to the edit button cell
-                const editCell = row.querySelector("td:first-child");
-                editCell.innerHTML = `
-                    <div class="flex space-x-2">
+                const actionCell = row.querySelector("td:first-child");
+                actionCell.innerHTML = `
+                    <div class="flex space-x-2 min-w-[100px]">
                         <button class="action-btn edit-btn" onclick="editRow(${rowIndex})">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button class="action-btn save-btn" onclick="saveRow(${rowIndex})">
                             <i class="fas fa-save"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteRow(${rowIndex})">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `;
@@ -1052,12 +1286,17 @@
 
                 row.classList.remove("edit-mode");
 
-                // Restore original edit button
-                const editCell = row.querySelector("td:first-child");
-                editCell.innerHTML = `
-                    <button class="action-btn edit-btn" onclick="editRow(${rowIndex})">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                // Restore original buttons
+                const actionCell = row.querySelector("td:first-child");
+                actionCell.innerHTML = `
+                    <div class="flex space-x-2 min-w-[100px]">
+                        <button class="action-btn edit-btn" onclick="editRow(${rowIndex})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteRow(${rowIndex})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 `;
 
                 showToast("Row updated successfully", "success");
@@ -1763,8 +2002,16 @@
 
                 function renderTableHeader() {
                     const thead = resultTable.createTHead();
-                    const row = thead.insertRow();
+                    const headerRowElement = thead.insertRow();
 
+                    // Add action column header first
+                    const actionHeader = document.createElement("th");
+                    actionHeader.className =
+                        "px-4 py-3 font-semibold border-b text-left";
+                    actionHeader.innerHTML = "Actions";
+                    headerRowElement.appendChild(actionHeader);
+
+                    // Add regular headers
                     headerRow.forEach((text, idx) => {
                         const th = document.createElement("th");
                         th.className =
@@ -1790,7 +2037,7 @@
                             sortAndRenderTable();
                         };
 
-                        row.appendChild(th);
+                        headerRowElement.appendChild(th);
                     });
                 }
 
@@ -1809,37 +2056,41 @@
                     const thead = resultTable.createTHead();
                     const headerRowElement = thead.insertRow();
 
-                    // Add edit column header
-                    const editHeader = document.createElement("th");
-                    editHeader.className =
+                    // Add action column header first
+                    const actionHeader = document.createElement("th");
+                    actionHeader.className =
                         "px-4 py-3 font-semibold border-b text-left";
-                    editHeader.innerHTML = `
-                        <div class="flex items-center space-x-2">
-                            <button class="action-btn global-edit-btn" onclick="toggleGlobalEdit()">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn add-row-btn" onclick="showAddRowForm()">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    `;
-                    //headerRowElement.appendChild(editHeader);
+                    actionHeader.innerHTML = "Actions";
+                    headerRowElement.appendChild(actionHeader);
 
                     // Add regular headers
                     headerRow.forEach((text, idx) => {
                         const th = document.createElement("th");
                         th.className =
                             "px-4 py-3 font-semibold border-b text-left cursor-pointer transition-colors duration-200";
-                        th.innerHTML = `<div class="flex items-center">${text}</div>`;
+
+                        // Add sort indicator
+                        const sortIndicator =
+                            sortCol === idx
+                                ? sortAsc
+                                    ? '<i class="fas fa-sort-up ml-2 text-indigo-600"></i>'
+                                    : '<i class="fas fa-sort-down ml-2 text-indigo-600"></i>'
+                                : '<i class="fas fa-sort ml-2 text-gray-300"></i>';
+
+                        th.innerHTML = `<div class="flex items-center">${text} ${sortIndicator}</div>`;
+
+                        th.onclick = () => {
+                            if (sortCol === idx) {
+                                sortAsc = !sortAsc;
+                            } else {
+                                sortCol = idx;
+                                sortAsc = true;
+                            }
+                            sortAndRenderTable();
+                        };
+
                         headerRowElement.appendChild(th);
                     });
-
-                    // Add delete column header
-                    const deleteHeader = document.createElement("th");
-                    deleteHeader.className =
-                        "px-4 py-3 font-semibold border-b text-left";
-                    deleteHeader.innerHTML = "Actions";
-                    headerRowElement.appendChild(deleteHeader);
 
                     const tbody = resultTable.createTBody();
                     const start = (currentPage - 1) * rowsPerPage;
@@ -1855,13 +2106,18 @@
                         // Add data-row-index attribute
                         tr.setAttribute("data-row-index", rowIdx);
 
-                        // Add edit button cell
-                        const editCell = tr.insertCell();
-                        editCell.className = "px-4 py-3 border-b";
-                        editCell.innerHTML = `
-                            <button class="action-btn edit-btn" onclick="editRow(${rowIdx})">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                        // Add action buttons cell first
+                        const actionCell = tr.insertCell();
+                        actionCell.className = "px-4 py-3 border-b";
+                        actionCell.innerHTML = `
+                            <div class="flex space-x-2 min-w-[100px]">
+                                <button class="action-btn edit-btn" onclick="editRow(${rowIdx})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteRow(${rowIdx})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         `;
 
                         // Add data cells
@@ -1891,15 +2147,6 @@
                                 td.textContent = cell;
                             }
                         });
-
-                        // Add delete button cell
-                        const deleteCell = tr.insertCell();
-                        deleteCell.className = "px-4 py-3 border-b";
-                        deleteCell.innerHTML = `
-                            <button class="action-btn delete-btn" onclick="deleteRow(${rowIdx})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        `;
                     });
 
                     resultCount.innerHTML = `<strong>${
