@@ -3,7 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Excel/CSV Smart Search</title>
+        <title>DataExplorer</title>
+        <link
+            rel="shortcut icon"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234F46E5' d='M3,3H11V11H3V3M3,13H11V21H3V13M13,3H21V11H13V3M13,13H21V21H13V13Z'/%3E%3C/svg%3E"
+            type="image/svg+xml"
+        />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <script src="https://cdn.tailwindcss.com"></script>
@@ -558,6 +563,7 @@
 
             /* Table container and sizing */
             .table-container {
+                position: relative;
                 max-height: calc(100vh - 250px);
                 overflow: auto;
                 margin-top: 1rem;
@@ -951,6 +957,262 @@
 
             .file-input-label:active {
                 transform: translateY(0);
+            }
+
+            /* Update styles for resizable columns */
+            .resizable {
+                position: relative;
+            }
+
+            .resizer {
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 10px;
+                cursor: col-resize;
+                user-select: none;
+                background-color: transparent;
+            }
+
+            .resizer:hover,
+            .resizer.resizing {
+                background-color: var(--accent-primary);
+                opacity: 0.5;
+            }
+
+            /* Table cell styles */
+            th,
+            td {
+                min-width: 100px;
+                max-width: 500px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                box-sizing: border-box;
+            }
+
+            /* Table styles */
+            table {
+                table-layout: fixed;
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+
+            /* Add styles for sort icons */
+            .sort-icon {
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 4px;
+                transition: background-color 0.2s;
+            }
+
+            .sort-icon:hover {
+                background-color: var(--accent-primary);
+                color: white;
+            }
+
+            .sort-icon.active {
+                color: var(--accent-primary);
+            }
+
+            /* Add styles for better user feedback */
+            .table-container {
+                position: relative;
+                max-height: calc(100vh - 250px);
+                overflow: auto;
+                margin-top: 1rem;
+            }
+
+            /* Loading overlay */
+            .loading-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                display: none;
+            }
+
+            .theme-dark .loading-overlay {
+                background: rgba(0, 0, 0, 0.8);
+            }
+
+            /* Prevent text selection during resize */
+            .resizing * {
+                user-select: none;
+            }
+
+            /* Improve table cell content display */
+            td {
+                position: relative;
+            }
+
+            td:hover::after {
+                content: attr(title);
+                position: absolute;
+                left: 0;
+                top: 100%;
+                background: var(--bg-secondary);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.875rem;
+                z-index: 1000;
+                white-space: normal;
+                max-width: 300px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                display: none;
+            }
+
+            td:hover:not(:empty)::after {
+                display: block;
+            }
+
+            /* Custom Scrollbar Styles */
+            /* Light Theme Scrollbar */
+            .theme-light ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+
+            .theme-light ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 5px;
+            }
+
+            .theme-light ::-webkit-scrollbar-thumb {
+                background: #4f46e5;
+                border-radius: 5px;
+                border: 2px solid #f1f1f1;
+            }
+
+            .theme-light ::-webkit-scrollbar-thumb:hover {
+                background: #4338ca;
+            }
+
+            /* Dark Theme Scrollbar */
+            .theme-dark ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+
+            .theme-dark ::-webkit-scrollbar-track {
+                background: #1a1a2a;
+                border-radius: 5px;
+            }
+
+            .theme-dark ::-webkit-scrollbar-thumb {
+                background: #6366f1;
+                border-radius: 5px;
+                border: 2px solid #1a1a2a;
+            }
+
+            .theme-dark ::-webkit-scrollbar-thumb:hover {
+                background: #818cf8;
+            }
+
+            /* Firefox Scrollbar */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: #4f46e5 #f1f1f1;
+            }
+
+            .theme-dark * {
+                scrollbar-color: #6366f1 #1a1a2a;
+            }
+
+            /* Table Container Specific Scrollbar */
+            .table-container::-webkit-scrollbar {
+                width: 12px;
+                height: 12px;
+            }
+
+            .table-container::-webkit-scrollbar-track {
+                background: var(--bg-secondary);
+                border-radius: 6px;
+            }
+
+            .table-container::-webkit-scrollbar-thumb {
+                background: var(--accent-primary);
+                border-radius: 6px;
+                border: 3px solid var(--bg-secondary);
+            }
+
+            .table-container::-webkit-scrollbar-thumb:hover {
+                background: var(--accent-secondary);
+            }
+
+            /* Smooth Scrolling */
+            html {
+                scroll-behavior: smooth;
+            }
+
+            /* Hide scrollbar for Chrome, Safari and Opera */
+            .hide-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Hide scrollbar for IE, Edge and Firefox */
+            .hide-scrollbar {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+            }
+
+            /* Adjust table header styles */
+            th {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem;
+                white-space: nowrap;
+                background-color: var(--table-header);
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                transition: background-color 0.2s ease;
+            }
+
+            /* Adjust header content layout */
+            th .flex.items-center.justify-between {
+                gap: 0.5rem;
+                min-height: 24px;
+            }
+
+            /* Adjust sort icons */
+            .sort-icon {
+                padding: 2px;
+                font-size: 0.75rem;
+                margin: 0;
+            }
+
+            /* Adjust resizer */
+            .resizer {
+                width: 6px;
+            }
+
+            /* Update table cell styles to match header */
+            td {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Adjust action buttons container */
+            .action-buttons {
+                display: flex;
+                gap: 0.25rem;
+                align-items: center;
+            }
+
+            .action-btn {
+                padding: 0.25rem;
+                font-size: 0.75rem;
             }
         </style>
     </head>
@@ -2007,35 +2269,110 @@
                     // Add action column header first
                     const actionHeader = document.createElement("th");
                     actionHeader.className =
-                        "px-4 py-3 font-semibold border-b text-left";
+                        "px-3 py-2 font-semibold border-b text-left resizable";
                     actionHeader.innerHTML = "Actions";
+                    actionHeader.style.width = "100px";
                     headerRowElement.appendChild(actionHeader);
 
                     // Add regular headers
                     headerRow.forEach((text, idx) => {
                         const th = document.createElement("th");
                         th.className =
-                            "px-4 py-3 font-semibold border-b text-left cursor-pointer transition-colors duration-200";
+                            "px-3 py-2 font-semibold border-b text-left resizable";
+                        th.style.width = "150px"; // Default width
 
-                        // Add sort indicator
-                        const sortIndicator =
-                            sortCol === idx
-                                ? sortAsc
-                                    ? '<i class="fas fa-sort-up ml-2 text-indigo-600"></i>'
-                                    : '<i class="fas fa-sort-down ml-2 text-indigo-600"></i>'
-                                : '<i class="fas fa-sort ml-2 text-gray-300"></i>';
+                        // Create header content container
+                        const headerContent = document.createElement("div");
+                        headerContent.className =
+                            "flex items-center justify-between";
 
-                        th.innerHTML = `<div class="flex items-center">${text} ${sortIndicator}</div>`;
+                        // Add column title
+                        const titleSpan = document.createElement("span");
+                        titleSpan.textContent = text;
+                        titleSpan.className = "truncate";
+                        headerContent.appendChild(titleSpan);
 
-                        th.onclick = () => {
-                            if (sortCol === idx) {
-                                sortAsc = !sortAsc;
+                        // Add sort icons container
+                        const sortContainer = document.createElement("div");
+                        sortContainer.className = "flex flex-col ml-1";
+
+                        // Add up arrow
+                        const upArrow = document.createElement("i");
+                        upArrow.className = `fas fa-sort-up sort-icon ${
+                            sortCol === idx && sortAsc ? "active" : ""
+                        }`;
+                        upArrow.onclick = (e) => {
+                            e.stopPropagation();
+                            if (sortCol === idx && sortAsc) {
+                                sortCol = -1; // Clear sort
                             } else {
                                 sortCol = idx;
                                 sortAsc = true;
                             }
                             sortAndRenderTable();
                         };
+
+                        // Add down arrow
+                        const downArrow = document.createElement("i");
+                        downArrow.className = `fas fa-sort-down sort-icon ${
+                            sortCol === idx && !sortAsc ? "active" : ""
+                        }`;
+                        downArrow.onclick = (e) => {
+                            e.stopPropagation();
+                            if (sortCol === idx && !sortAsc) {
+                                sortCol = -1; // Clear sort
+                            } else {
+                                sortCol = idx;
+                                sortAsc = false;
+                            }
+                            sortAndRenderTable();
+                        };
+
+                        sortContainer.appendChild(upArrow);
+                        sortContainer.appendChild(downArrow);
+                        headerContent.appendChild(sortContainer);
+                        th.appendChild(headerContent);
+
+                        // Add resizer
+                        const resizer = document.createElement("div");
+                        resizer.className = "resizer";
+                        th.appendChild(resizer);
+
+                        // Handle resize
+                        let isResizing = false;
+                        let startX;
+                        let startWidth;
+
+                        resizer.addEventListener("mousedown", (e) => {
+                            isResizing = true;
+                            startX = e.pageX;
+                            startWidth = th.offsetWidth;
+                            resizer.classList.add("resizing");
+                            e.preventDefault();
+                        });
+
+                        document.addEventListener("mousemove", (e) => {
+                            if (!isResizing) return;
+
+                            const width = startWidth + (e.pageX - startX);
+                            if (width >= 100 && width <= 500) {
+                                th.style.width = `${width}px`;
+                                // Update all cells in this column
+                                const cells = resultTable.querySelectorAll(
+                                    `td[data-col="${idx}"]`
+                                );
+                                cells.forEach(
+                                    (cell) => (cell.style.width = `${width}px`)
+                                );
+                            }
+                        });
+
+                        document.addEventListener("mouseup", () => {
+                            if (isResizing) {
+                                isResizing = false;
+                                resizer.classList.remove("resizing");
+                            }
+                        });
 
                         headerRowElement.appendChild(th);
                     });
@@ -2052,45 +2389,7 @@
                         return;
                     }
 
-                    // Add the header with sorting indicators and action buttons
-                    const thead = resultTable.createTHead();
-                    const headerRowElement = thead.insertRow();
-
-                    // Add action column header first
-                    const actionHeader = document.createElement("th");
-                    actionHeader.className =
-                        "px-4 py-3 font-semibold border-b text-left";
-                    actionHeader.innerHTML = "Actions";
-                    headerRowElement.appendChild(actionHeader);
-
-                    // Add regular headers
-                    headerRow.forEach((text, idx) => {
-                        const th = document.createElement("th");
-                        th.className =
-                            "px-4 py-3 font-semibold border-b text-left cursor-pointer transition-colors duration-200";
-
-                        // Add sort indicator
-                        const sortIndicator =
-                            sortCol === idx
-                                ? sortAsc
-                                    ? '<i class="fas fa-sort-up ml-2 text-indigo-600"></i>'
-                                    : '<i class="fas fa-sort-down ml-2 text-indigo-600"></i>'
-                                : '<i class="fas fa-sort ml-2 text-gray-300"></i>';
-
-                        th.innerHTML = `<div class="flex items-center">${text} ${sortIndicator}</div>`;
-
-                        th.onclick = () => {
-                            if (sortCol === idx) {
-                                sortAsc = !sortAsc;
-                            } else {
-                                sortCol = idx;
-                                sortAsc = true;
-                            }
-                            sortAndRenderTable();
-                        };
-
-                        headerRowElement.appendChild(th);
-                    });
+                    renderTableHeader();
 
                     const tbody = resultTable.createTBody();
                     const start = (currentPage - 1) * rowsPerPage;
@@ -2103,12 +2402,12 @@
                         const tr = tbody.insertRow();
                         tr.className =
                             rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50";
-                        // Add data-row-index attribute
                         tr.setAttribute("data-row-index", rowIdx);
 
                         // Add action buttons cell first
                         const actionCell = tr.insertCell();
-                        actionCell.className = "px-4 py-3 border-b";
+                        actionCell.className = "px-3 py-2 border-b";
+                        actionCell.style.width = "100px"; // Match header width
                         actionCell.innerHTML = `
                             <div class="flex space-x-2 min-w-[100px]">
                                 <button class="action-btn edit-btn" onclick="editRow(${rowIdx})">
@@ -2123,10 +2422,18 @@
                         // Add data cells
                         row.forEach((cell, cellIdx) => {
                             const td = tr.insertCell();
-                            td.className = "px-4 py-3 border-b text-gray-700";
+                            td.className = "px-3 py-2 border-b text-gray-700";
                             td.setAttribute("data-row", rowIdx);
                             td.setAttribute("data-col", cellIdx);
                             td.setAttribute("contenteditable", "false");
+
+                            // Match the width of the corresponding header
+                            const headerWidth = resultTable.querySelector(
+                                `th:nth-child(${cellIdx + 2})`
+                            ).style.width;
+                            if (headerWidth) {
+                                td.style.width = headerWidth;
+                            }
 
                             if (cell === null || cell === undefined) {
                                 td.textContent = "";
